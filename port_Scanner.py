@@ -1,6 +1,5 @@
 import subprocess
 import ipaddress
-import time
 from time import sleep
 
 control = 1
