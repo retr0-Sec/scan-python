@@ -2,41 +2,35 @@ import subprocess
 import ipaddress
 from time import sleep
 
-control = 1
-while control < 4:
+MAX_TENTATIVAS = 3
+tentativas = 0
+
+while tentativas < MAX_TENTATIVAS:
+    ip = input("[+] Digite o IP: ").strip()
     try:
-        ip = input("[+] Digite o ip:").strip()
         verificar = ipaddress.ip_address(ip)
         break
     except ValueError:
-        print("[-]INVALIDO!!Digite em Numeros,e conforme a sintaxe do IP")
-        print(f"São 3 tentativas,total de tentativas: {control} ")
-        control += 1
-    if control == 4:
-        print("TENTATIVAS ESGOTADAS!!!")
-        exit()
-try:
-    portas = input("Qual portas serão scaneadas: ")
-except ValueError:
-    print("Invalido!!, Digite um numero correto")
+        tentativas += 1
+        print(f"[-] IP inválido! Tentativa {tentativas} de {MAX_TENTATIVAS}.")
+        if tentativas == MAX_TENTATIVAS:
+            print("[-] TENTATIVAS ESGOTADAS! Encerrando...")
+            exit()
+
+
+portas = input("[+] Quais portas serão escaneadas (ex: 22,80,443): ").strip()
+
+print(f"[*] Escaneando o IP {ip} (IPv{verificar.version})...")
+sleep(1)
+
+comando = ["nmap", "-sS", "-p", portas, ip]
 if verificar.version == 6:
-    print(f"[*]Escaneando o ip: {ip}")
-    sleep(2)
-    scan = subprocess.run(["nmap","-6","-sS",f"-p {portas}",ip], capture_output=True, text=True)
-    for linha in scan.stdout.splitlines():
-        if "open" in linha:
-            print(f"[*] Porta Aberta Encontrada:{linha}")
-            sleep(2)
-if verificar.version == 4:
-    print(f"[*]Escaneando o ip: {ip}")
-    sleep(2)
-    scan = subprocess.run(["nmap","-sS", f"-p {portas}", ip], capture_output=True, text=True)
-    for linha in scan.stdout.splitlines():
-        if "open" in linha:
-            print(f"[*] Porta Aberta Encontrada:{linha}")
-            sleep(2)
+    comando.insert(1, "-6")
 
 
+resultado = subprocess.run(comando, capture_output=True, text=True)
 
-
-
+print("[*] Resultados:")
+for linha in resultado.stdout.splitlines():
+    if "open" in linha:
+        print(f"[+] Porta aberta encontrada: {linha}")
